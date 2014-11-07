@@ -130,11 +130,14 @@ function css_page(){
 
 	echo '<h1>Custom CSS</h1>
 	<label for="'.SLUG.'-css">Enter your custom CSS into the text field below:</label>
-	<form id="'.SLUG.'_form" method="post">
+	<form id="'.SLUG.'_form" method="post" class="css_form">
 		<textarea'.(!$opts['enable_css'] ? ' disabled="disabled"' : '').' id="'.SLUG.'-css" name="'.SLUG.'_css">'.$opts['css_code'].'</textarea><br />
 		<input class="button-primary" type="submit" value="Publish" />
 	</form>';
+	
+	if (isset($post["ajax"])) { die(); }
 }
+add_action('wp_ajax_css_page',__NAMESPACE__.'\css_page');
 
 function js_page(){
 	$opts = get_option(SLUG);
@@ -161,11 +164,14 @@ function js_page(){
 	<label for="'.SLUG.'-js">Enter your custom JS or JQ into the text field below:</label>
 	<br /><br />
 	If using JQ, remember to use <a href="http://codex.wordpress.org/Function_Reference/wp_enqueue_script#jQuery_noConflict_Wrappers" target="_blank">jQuery noConflict wrappers</a>.
-	<form id="'.SLUG.'_form" method="post">
+	<form id="'.SLUG.'_form" method="post" class="js_form">
 		<textarea'.(!$opts['enable_js'] ? ' disabled="disabled"' : '').' id="'.SLUG.'-js" name="'.SLUG.'_js">'.$opts['js_code'].'</textarea><br />
 		<input class="button-primary" type="submit" value="Publish" />
 	</form>';
+	
+	if (isset($post["ajax"])) { die(); }
 }
+add_action('wp_ajax_js_page',__NAMESPACE__.'\js_page');
 
 function settings_page(){
 	$opts = get_option(SLUG);
@@ -351,6 +357,26 @@ function wp_backend_header(){
 				// put caret at right position again
 				jQuery(this).get(0).selectionStart = jQuery(this).get(0).selectionEnd = start + 1;
 			}
+		});
+		
+		jQuery(document).on("submit", ".css_form, .js_form", function() {
+			var form = jQuery(this);
+			var type = form.hasClass("css_form") ? "css" : "js";
+			var data = {
+				action: type + "_page",
+				ajax: true
+			}
+			
+			data["'.SLUG.'_" + type] = jQuery("#'.SLUG.'-" + type).val()
+			jQuery.post(ajaxurl, data, function(response) {
+				clearTimeout(window.savedTimout);
+				jQuery(".saved").remove()
+				jQuery("<p class=\"saved\" style=\"position: absolute; \">Saved.</p>").hide().insertBefore(form.find("input:last")).fadeIn();
+				window.savedTimout = setTimeout(function(){ 
+					jQuery(".saved").remove();
+				}, 1500);
+			});
+			return false;
 		});
 	</script>
 	<div id="'.SLUG.'">';
