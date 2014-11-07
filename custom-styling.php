@@ -378,6 +378,15 @@ function wp_backend_header(){
 			});
 			return false;
 		});
+		
+		jQuery(document).keypress(function(event) {
+	    if (event.which == 115 && (event.ctrlKey||event.metaKey)|| (event.which == 19)) {
+	        event.preventDefault();
+	        jQuery(".css_form, .js_form").trigger("submit");
+	        return false;
+	    }
+	    return true;
+		});
 	</script>
 	<div id="'.SLUG.'">';
 }
